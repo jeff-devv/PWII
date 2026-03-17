@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Cadastro</title>
+    <link rel="stylesheet" type="text/css" href="formulario.css">
+</head>
+<body>
+    <div class="contorno">
+    <h1>Ficha de Cadastrada</h1>
+    <p>Prencha os campos abaixo com suas informações para se cadastrar em nosso banco de talentos</p>
+    <p>É inportante que nenhum campo fique em branco para facitar nosso contato com você.</p>
+    <input type="text" id="nomeDigitado" placeholder="Nome"><br><br>    
+    <input type="text" id="emailDigitado" placeholder="Email"><br><br> 
+    <input type="text" id="enderecoDigitado" placeholder="Endereço"><br><br> 
+    <button onclick="validarFormulario()">Cadastrar</button>
+    </div>
+
+    <script>
+
+        //objeto para pegar referencia do campo texto - document.getElementById("variável");
+        //colocando o foco no campo de nome para facilitar o preenchimento do formulário - .focus();
+        document.getElementById("nomeDigitado").focus();
+        
+        function validarFormulario(){
+            let nome = document.getElementById("nomeDigitado").value;
+            let email = document.getElementById("emailDigitado").value;
+            let endereco = document.getElementById("enderecoDigitado").value;
+            if(nome == ""){
+                alert("Por favor, preencha o campo do nome");
+                document.getElementById("nomeDigitado").style.boxShadow = "3px 3px 5px yellow";
+                return false
+            }else if(email == ""){
+                 alert("Por favor, preencha o campo do email");
+                document.getElementById("emailDigitado").style.boxShadow = "3px 3px 5px yellow";
+                return false
+            }else if(endereco == ""){
+                alert("Por favor, preencha o campo do endereco");
+                document.getElementById("enderecoDigitado").style.boxShadow = "3px 3px 5px yellow";
+                return false
+            }
+        }
+        
+
+    </script>
+    
+</body>
+</html>
