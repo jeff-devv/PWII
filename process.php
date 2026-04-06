@@ -2,93 +2,112 @@
 
 // CONFIGURAÇÃO - altere apenas estas 4 linhas 
 
-define('DB_HOST', '');
-define('DB_USER', '');
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', '');
+define('DB_NAME', 'db_cadastro');
 
-//PASSO 1 - responde sempre em JSON (SEM HTML)
+// PASSO 1 - responde sempre em JSON (SEM HTML)
 
-header('Content-tupe: application/json; charset=utf-8')
+header('Content-type: application/json; charset=utf-8');
 
-//PASSO 2 - garante que veio de um formulario
+// PASSO 2 - garante que veio de um formulario
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    exit(json_encode(['sucesso' => false, 'erro' =>'Envie os dados via formulario (POST).']));
+    exit(json_encode([
+        'sucesso' => false,
+        'erro' => 'Envie os dados via formulario (POST).'
+    ]));
 }
 
-//PASSO 3 -le os campos e valida
+// PASSO 3 - lê os campos e valida
 
-$campos = array_map('trim', $_POST); // remove espaço m branco
+$campos = array_map('trim', $_POST); // remove espaços em branco
 $erros = [];
 
 foreach ($campos as $nome => $valor) {
     if ($valor === '') {
-        $erros [] = "o campo \"$nome\" nao pode ficar vazio.";
+        $erros[] = "O campo \"$nome\" não pode ficar vazio.";
     }
 }
 
-if (isset($erros['email']) && !filter_var($campos['email'], FILTER_VALIDATE_EMAIL)){
-    $erros [] = 'Email informado é invalido.';
+// valida email (se existir)
+if (isset($campos['email']) && !filter_var($campos['email'], FILTER_VALIDATE_EMAIL)) {
+    $erros[] = 'Email informado é inválido.';
 }
 
-if ($erros){
+if ($erros) {
     http_response_code(422);
-    exit(json_encode(['sucesso' => false, 'erros' =>]));
+    exit(json_encode([
+        'sucesso' => false,
+        'erros' => $erros
+    ]));
 }
 
-//PASSO 4 - conecta ao MYSQL e cria o banco
+// PASSO 4 - conecta ao MYSQL e cria o banco
 
 try {
-    $pdo = new PDO('mysql:host=' . DB_HOST,DB_USER,DB_PASS);
-    $pdo -> setAttribute(PDO::ERRMODE_EXCEPTION);
-    
-    // cria o banco dados se ainda nao existir
+    $pdo = new PDO('mysql:host=' . DB_HOST, DB_USER, DB_PASS);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $pdo ->exec('CREATE DATABASE IF NOT EXISTS`'. DB_NAME. '` CHARACTER SET uft8mb4');
-    $pdo ->exec('USE`'. DB_NAME'`');
-    
+    // cria o banco se não existir
+    $pdo->exec('CREATE DATABASE IF NOT EXISTS ' . DB_NAME . ' CHARACTER SET utf8mb4');
+    $pdo->exec('USE ' . DB_NAME);
 
-//PASSO 5 -cria a tbela se ainda nao existir 
+// PASSO 5 - cria a tabela se não existir 
 
-$pdo ->exec ('CREATE TABLE IF NOT EXISTS `CADASTROS`(
-    id  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
-    criando_em DATATIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB default charset=utf8mb4');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS cadastros (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        criando_em DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
 
-//pPASSO 6 -  adiciona colunas novas automaticamente (cada campo do formulario vira uma coluna)
+// PASSO 6 - adiciona colunas automaticamente
 
-$colunas_existentes = $pdo ->query('SHOW COLUMNS FROM `cadastros`') ->fetchAll(PDO::FETCH_COLUMN);
+    $colunas_existentes = $pdo
+        ->query('SHOW COLUMNS FROM cadastros')
+        ->fetchAll(PDO::FETCH_COLUMN);
 
-foreach (array_keys($campos) as $campo) {
-    $coluna = preg_replace('/[^a-zA-Z0-9_]/', '_', $campo);  //so letras, numeros e _
-    if (!in_array($coluna, $colunas_existentes)){
-        $pdo ->exec('ALTER TABLE `CADASTROS` ADD COLUMMN `' . $coluna. '`VARCHAR(500)`');
+    foreach (array_keys($campos) as $campo) {
+        $coluna = preg_replace('/[^a-zA-Z0-9_]/', '_', $campo);
 
+        if (!in_array($coluna, $colunas_existentes)) {
+            $pdo->exec('ALTER TABLE cadastros ADD COLUMN `' . $coluna . '` VARCHAR(500)');
+        }
     }
-}
 
-// PASSO 7 — Salva os dados no banco
+// PASSO 7 — salva os dados no banco
 
-$colunas = array_map(fn($c) => '`' . preg_replace('/[^a-zA-Z0-9_]/', '_', $c) . '`', array_keys($campos));
-$binds   = array_map(fn($c) => ':' . preg_replace('/[^a-zA-Z0-9_]/', '_', $c), array_keys($campos));
-$valores = array_combine($binds, array_values($campos));
+    $colunas = array_map(
+        fn($c) => '`' . preg_replace('/[^a-zA-Z0-9_]/', '_', $c) . '`',
+        array_keys($campos)
+    );
 
-$sql  = 'INSERT INTO `cadastros` (' . implode(', ', $colunas) . ') VALUES (' . implode(', ', $binds) . ')';
-$stmt = $pdo->prepare($sql);
-$stmt->execute($valores);
+    $binds = array_map(
+        fn($c) => ':' . preg_replace('/[^a-zA-Z0-9_]/', '_', $c),
+        array_keys($campos)
+    );
 
-// PASSO 8 — Retorna sucesso
+    $valores = array_combine($binds, array_values($campos));
 
-echo json_encode([
-    'sucesso'  => true,
-    'mensagem' => 'Cadastro salvo com sucesso!',
-    'id'       => (int) $pdo->lastInsertId(),
-]);
+    $sql = 'INSERT INTO cadastros (' . implode(', ', $colunas) . ') 
+            VALUES (' . implode(', ', $binds) . ')';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($valores);
+
+// PASSO 8 — retorno de sucesso
+
+    echo json_encode([
+        'sucesso'  => true,
+        'mensagem' => 'Cadastro salvo com sucesso!',
+        'id'       => (int) $pdo->lastInsertId(),
+    ]);
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['sucesso' => false, 'erro' => $e->getMessage()]);
+    echo json_encode([
+        'sucesso' => false,
+        'erro' => $e->getMessage()
+    ]);
 }
-
