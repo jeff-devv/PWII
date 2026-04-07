@@ -1,11 +1,5 @@
 <?php 
-
-// CONFIGURAÇÃO - altere apenas estas 4 linhas 
-
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'db_cadastro');
+require_once 'conexao.php';
 
 // PASSO 1 - responde sempre em JSON (SEM HTML)
 
@@ -15,9 +9,7 @@ header('Content-type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    exit(json_encode([
-        'sucesso' => false,
-        'erro' => 'Envie os dados via formulario (POST).'
+    exit(json_encode(['sucesso' => false,'erro' => 'Envie os dados via formulario (POST).'
     ]));
 }
 
@@ -48,8 +40,7 @@ if ($erros) {
 // PASSO 4 - conecta ao MYSQL e cria o banco
 
 try {
-    $pdo = new PDO('mysql:host=' . DB_HOST, DB_USER, DB_PASS);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
 
     // cria o banco se não existir
     $pdo->exec('CREATE DATABASE IF NOT EXISTS ' . DB_NAME . ' CHARACTER SET utf8mb4');
