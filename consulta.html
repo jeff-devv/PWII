@@ -123,6 +123,78 @@
             Voltar ao Formulário
         </button>
     </form>   
+
+    <!-- Tabela com dados da consulta-->
+    <div id="tabelaResultado">
+        <table class="table table-bordered table-hover table-sm mt-2">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Criado em</th>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Endereço</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td id="col-id"></td>
+                    <td id="col-criado_em"></td>
+                    <td id="col-nome"></td>
+                    <td id="col-email"></td>
+                    <td id="col-endereco"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function popularTabela(json){
+        if(!json.sucesso || !jason.cadastro)return;
+
+        const c = json.cadastro;
+        document.getElementById('col-id').textContent = c.id;
+        document.getElementById('col-criado_em').textContent = c.criado_em;
+        document.getElementById('com-nome').textContent = c.nome;
+        document.getElementById('com-email').textContent = c.email;
+        document.getElementById('com-endereco').textContent = c.endereco;
+
+        document.getElementById('tabelaResultado').style.display = 'block';
+    }
+
+    Document.getElementById('consultaForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+
+        const email = document.getElementById('email').values;
+        const btn = document.getElementById('btnConsultar');
+
+        btn.disabled = true;
+        btn.textContent = 'Consultando...';
+        document.getElementById('tabelaResultado').style.display = 'none';
+
+        try{
+            const formData = new FormData();
+            formData.append('email', email);
+
+            const response = await fetch('http://localhost/formulario/consulta.php',{
+                method: 'POST',
+                body: formData
+            });
+
+            if(!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+
+            const json = await response.jason();
+            popularTabela(json);
+        
+        } catch{
+            alert('Erro ao consultar: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Consultar Dados';
+        }
+    });
+</script>
 </body>
 </html>
